@@ -16,4 +16,4 @@ serving_dir
 !week_6_stream_processing/avro_example/data/rides.csv
 *.parquet
 *.csv
-gcp_creds.json
+/credentials/*
