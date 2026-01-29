@@ -52,9 +52,11 @@ To make this visible in Kestra, I added the following tasks:
 ```
 
 This exposes the size directly in the execution outputs.
+
 ![homework datasets](../images/output_file_size.png)
 
 I also temporarily disabled the file purge task so the extracted file remained available:
+
 ![homework datasets](../images/extract_output.png)
 
 2. What is the rendered value of the variable `file` when the inputs `taxi` is set to `green`, `year` is set to `2020`, and `month` is set to `04` during execution?
@@ -68,6 +70,7 @@ I also temporarily disabled the file purge task so the extracted file remained a
 
 This was validated two ways:
 From execution UI:
+
 ![homework datasets](../images/execution_04.png)
 
 From an explicit log task
@@ -170,12 +173,3 @@ triggers:
       inputs:
           taxi: yellow
 ```
-
-## Submitting the solutions
-
-- Form for submitting: https://courses.datatalks.club/de-zoomcamp-2026/homework/hw2
-- Check the link above to see the due date
-
-## Solution
-
-Will be added after the due date
