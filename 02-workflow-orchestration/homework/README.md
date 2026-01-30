@@ -20,11 +20,11 @@ Executed for both yellow and green taxi datasets
 
 This approach allows Kestra to automatically generate executions for each month in the selected range.
 
-![homework datasets](../images/backfill.png)
+![backfill](../images/backfill.png)
 Yellow Executions:
-![homework datasets](../images/executions_yellow.png)
+![yellow executions](../images/executions_yellow.png)
 Green Executions:
-![homework datasets](../images/executions.png)
+![green executions](../images/executions.png)
 
 ### Quiz Questions
 
@@ -53,11 +53,11 @@ To make this visible in Kestra, I added the following tasks:
 
 This exposes the size directly in the execution outputs.
 
-![homework datasets](../images/output_file_size.png)
+![file size output](../images/output_file_size.png)
 
 I also temporarily disabled the file purge task so the extracted file remained available:
 
-![homework datasets](../images/extract_output.png)
+![extract output](../images/extract_output.png)
 
 2. What is the rendered value of the variable `file` when the inputs `taxi` is set to `green`, `year` is set to `2020`, and `month` is set to `04` during execution?
 
@@ -71,7 +71,7 @@ I also temporarily disabled the file purge task so the extracted file remained a
 This was validated two ways:
 From execution UI:
 
-![homework datasets](../images/execution_04.png)
+![execution](../images/execution_04.png)
 
 From an explicit log task
 
@@ -82,7 +82,7 @@ From an explicit log task
   message: "{{render(vars.file)}}"
 ```
 
-![homework datasets](../images/execution_04_log.png)
+![execution log](../images/execution_04_log.png)
 
 3. How many rows are there for the `Yellow` Taxi data for all CSV files in the year 2020?
 
@@ -146,7 +146,7 @@ WHERE lpep_pickup_datetime >= TIMESTAMP("2020-01-01")
 **Answer: 1,925,152**
 
 This value was verified directly from the BigQuery table:
-![homework datasets](../images/storage_info.png)
+![storage info](../images/storage_info.png)
 
 6. How would you configure the timezone to New York in a Schedule trigger?
 
