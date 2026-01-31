@@ -1,4 +1,4 @@
-# Module 1 Homework: Data Warehouse and BigQuery
+# Module 3 Homework: Data Warehouse and BigQuery
 
 ## Environment setup
 
