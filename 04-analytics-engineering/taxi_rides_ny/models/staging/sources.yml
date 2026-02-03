@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+    - name: raw_data
+      description: "NY Taxi Rides data sourced from raw data files"
+      database: taxi_rides_ny # For BQ Project ID
+      schema: prod # For BQ Dataset
+      tables:
+          - name: yellow_tripdata
+            description: "Raw taxi rides data"
+          - name: green_tripdata
+            description: "NYC taxi zones data"
