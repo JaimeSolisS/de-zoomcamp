@@ -1,15 +1,13 @@
-Welcome to your new dbt project!
+# Steps after setup
 
-### Using the starter project
+1. Create sources.yml in models/staging
 
-Try running the following commands:
-- dbt run
-- dbt test
+2. Create staging models (minimal changes casting and naming)
 
+3. Create intermediate model (Green + Yellow data), add columns to Yellow
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+4. Create Seed if necesary
+
+5. Create marts models (dimension and fact)
+
+6. Write Documentation & Tests
