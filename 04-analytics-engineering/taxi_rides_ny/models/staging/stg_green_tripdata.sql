@@ -27,4 +27,4 @@ select
     cast(payment_type as integer) as payment_type
 
 from {{ source('raw_data', 'green_tripdata') }}
-where vendor is not null
+where vendorid is not null
