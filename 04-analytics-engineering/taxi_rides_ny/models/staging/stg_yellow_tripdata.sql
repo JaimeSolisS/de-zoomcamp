@@ -1,4 +1,4 @@
-select * 
+select 
     -- identifiers (standardized naming for consistency across yellow/green)
     cast(vendorid as integer) as vendor_id,
     cast(ratecodeid as integer) as rate_code_id,
