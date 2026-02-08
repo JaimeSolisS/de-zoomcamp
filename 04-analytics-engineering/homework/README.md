@@ -177,7 +177,12 @@ What is the count of records in `stg_fhv_tripdata`?
 - 22,998,722
 - 44,112,187
 
----
+## **Answer: 43,244,693**
+
+```sql
+select count(*)
+from {{ ref('stg_fhv_tripdata') }}
+```
 
 ## Submitting the solutions
 
