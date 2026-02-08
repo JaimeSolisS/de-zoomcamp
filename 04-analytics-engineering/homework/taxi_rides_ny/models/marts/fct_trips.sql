@@ -1,6 +1,6 @@
 {{
   config(
-    materialized='incremental',
+    materialized='view',
     unique_key='trip_id',
     incremental_strategy='merge',
     on_schema_change='append_new_columns'  )
