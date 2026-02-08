@@ -34,7 +34,43 @@ If you run `dbt run --select int_trips_unioned`, what models will be built?
 - `int_trips_unioned` only
 - `int_trips_unioned`, `int_trips`, and `fct_trips` (downstream dependencies)
 
----
+**Answer: `int_trips_unioned` only**
+
+```bash
+dbt run --select int_trips_unioned
+Running with dbt=1.11.2
+Registered adapter: duckdb=1.10.0
+Found 8 models, 2 seeds, 33 data tests, 2 sources, 618 macros
+Concurrency: 1 threads (target='dev')
+1 of 1 START sql table model dev.int_trips_unioned ............................. [RUN]
+1 of 1 OK created sql table model dev.int_trips_unioned ........................ [OK in 7.38s]
+Finished running 1 table model in 0 hours 0 minutes and 7.62 seconds (7.62s).
+Completed successfully
+Done. PASS=1 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=1
+```
+
+From DBT Docs:
+
+```bash
+dbt run --select "my_dbt_project_name"   # runs all models in your project
+dbt run --select "my_dbt_model"          # runs a specific model
+dbt run --select "path/to/my/models"     # runs all models in a specific directory
+dbt run --select "my_package.some_model" # run a specific model in a specific package
+dbt run --select "tag:nightly"           # run models with the "nightly" tag
+dbt run --select "path/to/models"        # run models contained in path/to/models
+dbt run --select "path/to/my_model.sql"  # run a specific model by its path
+
+# multiple arguments can be provided to --select
+dbt run --select "my_first_model my_second_model"
+# select my_model and all of its children
+dbt run --select "my_model+"
+# select my_model, its children, and the parents of its children
+dbt run --select @my_model
+# these arguments can be projects, models, directory paths, tags, or sources
+dbt run --select "tag:nightly my_model finance.base.*"
+# use methods and intersections for more complex selectors
+dbt run --select "path:marts/finance,tag:nightly,config.materialized:table"
+```
 
 ### Question 2. dbt Tests
 
@@ -71,6 +107,13 @@ What is the count of records in the `fct_monthly_zone_revenue` model?
 - 12,184
 - 15,421
 
+**Answer: 12,184**
+
+```sql
+SELECT COUNT(*)
+FROM {{ ref('fct_monthly_zone_revenue') }}
+```
+
 ---
 
 ### Question 4. Best Performing Zone for Green Taxis (2020)
@@ -84,6 +127,18 @@ Which zone had the highest revenue?
 - East Harlem South
 - Washington Heights South
 
+**Answer: East Harlem North**
+
+```sql
+SELECT pickup_zone, sum(revenue_monthly_total_amount) as total_revenue
+FROM {{ ref('fct_monthly_zone_revenue') }}
+WHERE CAST(revenue_month as string) like '2020%'
+AND service_type = 'Green'
+GROUP BY pickup_zone
+ORDER BY total_revenue DESC
+LIMIT 1;
+```
+
 ---
 
 ### Question 5. Green Taxi Trip Counts (October 2019)
@@ -94,6 +149,15 @@ Using the `fct_monthly_zone_revenue` table, what is the **total number of trips*
 - 350,891
 - 384,624
 - 421,509
+
+Answer: 384,624
+
+```sql
+SELECT SUM(total_monthly_trips) as total_trips
+FROM {{ ref('fct_monthly_zone_revenue') }}
+WHERE revenue_month = '2019-10-01'
+and service_type = 'Green'
+```
 
 ---
 
