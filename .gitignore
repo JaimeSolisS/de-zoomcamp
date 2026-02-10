@@ -20,3 +20,4 @@ serving_dir
 *.duckdb
 *.tmp
 .vscode*
+.bruin.yml
