@@ -18,3 +18,5 @@ serving_dir
 *.csv
 /credentials/*
 *.duckdb
+*.tmp
+.vscode*
