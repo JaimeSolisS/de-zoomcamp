@@ -1,0 +1,10 @@
+sources:
+    - name: raw
+      description: Raw taxi trip data from NYC TLC
+      database: de-zoomcamp-484622
+      schema: dbt_taxi_rides_ny
+      tables:
+          - name: green_tripdata
+            description: Raw green taxi trip records
+          - name: yellow_tripdata
+            description: Raw yellow taxi trip records
