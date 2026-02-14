@@ -72,6 +72,8 @@ dbt run --select "tag:nightly my_model finance.base.*"
 dbt run --select "path:marts/finance,tag:nightly,config.materialized:table"
 ```
 
+---
+
 ### Question 2. dbt Tests
 
 You've configured a generic test like this in your `schema.yml`:
@@ -95,6 +97,8 @@ What happens when you run `dbt test --select fct_trips`?
 - dbt will update the configuration to include the new value
 
 **Answer: dbt will fail the test, returning a non-zero exit code**
+
+---
 
 ### Question 3. Counting Records in `fct_monthly_zone_revenue`
 
@@ -150,7 +154,7 @@ Using the `fct_monthly_zone_revenue` table, what is the **total number of trips*
 - 384,624
 - 421,509
 
-Answer: 384,624
+**Answer: 384,624**
 
 ```sql
 SELECT SUM(total_monthly_trips) as total_trips
@@ -177,7 +181,7 @@ What is the count of records in `stg_fhv_tripdata`?
 - 22,998,722
 - 44,112,187
 
-## **Answer: 43,244,693**
+**Answer: 43,244,693**
 
 ```sql
 select count(*)
