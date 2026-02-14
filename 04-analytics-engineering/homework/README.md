@@ -94,7 +94,7 @@ What happens when you run `dbt test --select fct_trips`?
 - dbt will pass the test with a warning about the new value
 - dbt will update the configuration to include the new value
 
----
+**Answer: dbt will fail the test, returning a non-zero exit code**
 
 ### Question 3. Counting Records in `fct_monthly_zone_revenue`
 
@@ -182,53 +182,4 @@ What is the count of records in `stg_fhv_tripdata`?
 ```sql
 select count(*)
 from {{ ref('stg_fhv_tripdata') }}
-```
-
-## Submitting the solutions
-
-- Form for submitting: <https://courses.datatalks.club/de-zoomcamp-2026/homework/hw4>
-
-=======
-
-## Learning in Public
-
-We encourage everyone to share what they learned. This is called "learning in public".
-
-Read more about the benefits [here](https://alexeyondata.substack.com/p/benefits-of-learning-in-public-and).
-
-### Example post for LinkedIn
-
-```
-🚀 Week 4 of Data Engineering Zoomcamp by @DataTalksClub complete!
-
-Just finished Module 4 - Analytics Engineering with dbt. Learned how to:
-
-✅ Build transformation models with dbt
-✅ Create staging, intermediate, and fact tables
-✅ Write tests to ensure data quality
-✅ Understand lineage and model dependencies
-✅ Analyze revenue patterns across NYC zones
-
-Transforming raw data into analytics-ready models - the T in ELT!
-
-Here's my homework solution: <LINK>
-
-Following along with this amazing free course - who else is learning data engineering?
-
-You can sign up here: https://github.com/DataTalksClub/data-engineering-zoomcamp/
-```
-
-### Example post for Twitter/X
-
-```
-📈 Module 4 of Data Engineering Zoomcamp done!
-
-- Analytics Engineering with dbt
-- Transformation models & tests
-- Data lineage & dependencies
-- NYC taxi revenue analysis
-
-My solution: <LINK>
-
-Free course by @DataTalksClub: https://github.com/DataTalksClub/data-engineering-zoomcamp/
 ```
