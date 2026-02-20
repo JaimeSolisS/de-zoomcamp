@@ -25,3 +25,6 @@ logs/runs
 logs/*.log
 __pycache__/
 *.py[cod]
+.claude
+.cursor
+.dlt
