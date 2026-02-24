@@ -142,6 +142,9 @@ We challenge you to try out the different methods explored in the workshop when 
 
 **Answer with Agent: 2009-06-01 to 2009-07-01**
 
+With dlt Dashboard
+![Q1](../homework/images/Q1.png)
+
 ### Question 2: What proportion of trips are paid with credit card?
 
 - 16.66%
@@ -151,6 +154,9 @@ We challenge you to try out the different methods explored in the workshop when 
 
 **Answer with agent: 26.66%**
 
+With dlt Dashboard
+![Q2](../homework/images/Q2.png)
+
 ### Question 3: What is the total amount of money generated in tips?
 
 - $4,063.41
@@ -159,6 +165,9 @@ We challenge you to try out the different methods explored in the workshop when 
 - $10,063.41
 
 **Answer with Agent: $6,063.41**
+
+With dlt Dashboard
+![Q3](../homework/images/Q3.png)
 
 ### Resources
 
