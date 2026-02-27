@@ -28,3 +28,6 @@ __pycache__/
 .claude
 .cursor
 .dlt
+*snappy.parquet*
+_SUCCESS
+._SUCCESS*
