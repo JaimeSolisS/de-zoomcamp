@@ -31,3 +31,4 @@ __pycache__/
 *snappy.parquet*
 _SUCCESS
 ._SUCCESS*
+*.csv.gz
