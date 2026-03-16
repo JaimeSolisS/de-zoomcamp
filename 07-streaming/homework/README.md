@@ -511,7 +511,7 @@ LIMIT 5;
 
 > [!NOTE]
 > In Question 4 we put every event into fixed 5-minute buckets.  
-> In Question 5 w group events into sessions, where a session continues as long as events for the same PULocationID keep arriving without a gap larger than 5 minutes.  
+> In Question 5 we group events into sessions, where a session continues as long as events for the same PULocationID keep arriving without a gap larger than 5 minutes.  
 > Tumbling window = fixed intervals like 10:00–10:05, 10:05–10:10.  
 > Session window = dynamic intervals based on activity, like 10:02–10:11.
 
