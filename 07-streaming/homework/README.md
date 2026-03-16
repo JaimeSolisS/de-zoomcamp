@@ -113,7 +113,30 @@ How long did it take to send the data?
 
 **Answer: 10 seconds**
 
-Run the producer:
+Steps:
+
+1. Create green Producer & Add green model:
+
+```python
+# Different data, different columns
+url = "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2025-10.parquet"
+columns = ['lpep_pickup_datetime','lpep_dropoff_datetime', 'PULocationID', 'DOLocationID', 'passenger_count', 'trip_distance', 'tip_amount', 'total_amount']
+df = pd.read_parquet(url, columns=columns)
+
+df['lpep_pickup_datetime'] = df['lpep_pickup_datetime'].astype('str')
+df['lpep_dropoff_datetime'] = df['lpep_dropoff_datetime'].astype('str')
+...
+# Different topic
+topic_name = 'green-trips'
+
+# Green Model
+for _, row in df.iterrows():
+    ride = green_ride_from_row(row)
+    producer.send(topic_name, value=ride)
+...
+```
+
+2. Run the Producer:
 
 ```bash
 uv run src/producers/green_producer.py
@@ -136,7 +159,9 @@ How many trips have `trip_distance` > 5?
 
 **Answer: 8506**
 
-Connect to Postgress and create the table:
+Steps:
+
+1. Connect to Postgress and create the table:
 
 ```bash
 docker compose exec postgres psql -U postgres -d postgres
@@ -153,13 +178,38 @@ postgres=# CREATE TABLE green_processed_events (
 );
 ```
 
-Run consumer:
+2. Create green Consumer with green desearilizer, green topic and green columns
+
+```python
+...
+topic_name = 'green-trips'
+...
+consumer = KafkaConsumer(
+    topic_name,
+    bootstrap_servers=[server],
+    auto_offset_reset='earliest',
+    group_id='green-trips-to-postgres',
+    value_deserializer=green_ride_deserializer
+)
+...
+for message in consumer:
+    ride = message.value
+    cur.execute(
+        """INSERT INTO green_processed_events
+           (lpep_pickup_datetime, lpep_dropoff_datetime, PULocationID, DOLocationID, passenger_count, trip_distance, tip_amount, total_amount)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+        (ride.lpep_pickup_datetime, ride.lpep_dropoff_datetime, ride.PULocationID, ride.DOLocationID, ride.passenger_count, ride.trip_distance, ride.tip_amount, ride.total_amount)
+    )
+...
+```
+
+3. Run the Consumer:
 
 ```bash
  uv run src/consumers/green_consumer.py
 ```
 
-Query table, check that the number of records matches with source data, check the data and query to answer the question:
+3. Query the table, check that the number of records matches with source data, check the data and query to answer the question:
 
 ```bash
 postgres=# select count(*) from green_processed_events;
@@ -168,7 +218,7 @@ postgres=# select count(*) from green_processed_events;
  49416
 (1 row)
 
-postgres=# select * from green_processed_events limit 10;
+postgres=# select * from green_processed_events limit 5;
  lpep_pickup_datetime | lpep_dropoff_datetime | pulocationid | dolocationid | passenger_count | trip_distance | tip_amount | total_amount
 ----------------------+-----------------------+--------------+--------------+-----------------+---------------+------------+--------------
  2025-10-01 00:21:47  | 2025-10-01 00:24:37   |          247 |           69 |               1 |           0.7 |        1.7 |           10
@@ -176,12 +226,7 @@ postgres=# select * from green_processed_events limit 10;
  2025-10-01 00:16:44  | 2025-10-01 00:16:47   |          244 |          244 |               1 |             0 |        2.2 |         13.2
  2025-10-01 00:07:36  | 2025-10-01 00:32:14   |           95 |          170 |               1 |         10.37 |      11.31 |        67.85
  2025-09-30 21:10:29  | 2025-09-30 21:22:30   |           82 |          138 |               1 |          4.07 |       6.82 |        34.12
- 2025-09-30 21:49:46  | 2025-10-01 21:18:42   |          129 |           37 |               1 |          7.13 |       9.42 |        47.12
- 2025-10-01 00:11:24  | 2025-10-01 00:18:48   |           95 |          134 |               1 |          1.13 |       2.08 |        13.88
- 2025-10-01 00:07:08  | 2025-10-01 00:21:46   |           95 |           70 |               1 |          6.01 |       5.72 |        34.32
- 2025-10-01 00:36:08  | 2025-10-01 00:54:59   |          181 |          137 |               1 |          6.45 |       6.98 |        41.88
- 2025-10-01 00:26:55  | 2025-10-01 00:33:00   |           74 |          236 |               1 |          1.74 |       2.91 |        17.46
-(10 rows)
+(5 rows)
 
 postgres=# select count(*) from green_processed_events where trip_distance > 5;
  count
@@ -250,6 +295,102 @@ Which `PULocationID` had the most trips in a single 5-minute window?
 - 75
 - 166
 
+**Answer: 74**
+
+Steps:
+
+1. Create the table
+
+```bash
+$ docker compose exec postgres psql -U postgres -d postgres
+
+CREATE TABLE aggregated_trips_5_min (
+    window_start TIMESTAMP,
+    PULocationID INTEGER,
+    num_trips BIGINT,
+    PRIMARY KEY (window_start, PULocationID)
+);
+```
+
+2. Create the job. Using `aggregation_job` as base, we have to change:
+
+- Topic and table
+
+```python
+table_name = "green_events_1"
+
+'topic' = 'green-trips'
+```
+
+- Source schema
+
+```pthon
+CREATE TABLE green_events_1 (
+    lpep_pickup_datetime VARCHAR,
+    lpep_dropoff_datetime VARCHAR,
+    PULocationID INTEGER,
+    DOLocationID INTEGER,
+    passenger_count DOUBLE,
+    trip_distance DOUBLE,
+    tip_amount DOUBLE,
+    total_amount DOUBLE
+)
+```
+
+- Timestamp Parsing
+
+```python
+event_timestamp AS TO_TIMESTAMP(lpep_pickup_datetime, 'yyyy-MM-dd HH:mm:ss')
+```
+
+- Window Size
+
+```python
+TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTES)
+```
+
+- Modify Sink table schema
+
+```python
+CREATE TABLE aggregated_trips_5_min (
+    window_start TIMESTAMP(3),
+    PULocationID INT,
+    num_trips BIGINT,
+    PRIMARY KEY (window_start, PULocationID) NOT ENFORCED
+)
+```
+
+- Update aggregation query
+
+```python
+SELECT
+    window_start,
+    PULocationID,
+    COUNT(*) AS num_trips
+```
+
+The rest of the Flink pipeline structure stays the same.
+
+run job
+
+```
+docker compose exec jobmanager ./bin/flink run \
+    -py /opt/src/job/tumbling_window_pickup_location_green_job.py \
+    --pyFiles /opt/src -d
+```
+
+Query
+
+```bash
+postgres=# SELECT PULocationID, num_trips FROM aggregated_trips_5_min ORDER BY num_trips DESC LIMIT 3;
+ pulocationid | num_trips
+--------------+-----------
+           74 |        15
+           74 |        14
+           74 |        13
+(3 rows)
+```
+
 ## Question 5. Session window - longest streak
 
 Create another Flink job that uses a session window with a 5-minute gap
@@ -269,6 +410,111 @@ How many trips were in the longest session?
 - 51
 - 81
 
+**Answer: 81**
+
+Steps:
+
+1. create table
+
+```
+CREATE TABLE IF NOT EXISTS session_trips (
+    window_start TIMESTAMP,
+    window_end TIMESTAMP,
+    PULocationID INT,
+    num_trips BIGINT,
+    PRIMARY KEY (window_start, window_end, PULocationID)
+);
+```
+
+2. Create the job. For this we switch from a 5-minute tumbling window to a 5-minute session window.
+
+- Change the table name of events.
+
+```python
+table_name = "green_events_2"
+```
+
+- Source schema stays the same
+
+```python
+event_timestamp AS TO_TIMESTAMP(lpep_pickup_datetime, 'yyyy-MM-dd HH:mm:ss'),
+WATERMARK FOR event_timestamp AS event_timestamp - INTERVAL '5' SECOND
+```
+
+- Sink table and function name changes
+
+```python
+def create_session_sink(t_env):
+    table_name = 'session_trips'
+```
+
+- Add `window_end` to the sink schema. The primary key changes too, because now each result row is uniquely identified by start, end, and pickup location.
+
+```python
+CREATE TABLE session_trips (
+    window_start TIMESTAMP(3),
+    window_end TIMESTAMP(3),
+    PULocationID INT,
+    num_trips BIGINT,
+    PRIMARY KEY (window_start, window_end, PULocationID) NOT ENFORCED
+)
+```
+
+- Change the query from `TUMBLE` to `SESSION`
+
+```python
+FROM TABLE(
+    SESSION(TABLE {source_table} PARTITION BY PULocationID, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
+)
+GROUP BY window_start, window_end, PULocationID;
+```
+
+- Add `window_end` to the select and group by start, end and location
+
+```python
+SELECT
+            window_start,
+            window_end,
+            PULocationID,
+            COUNT(*) AS num_trips
+        FROM TABLE(
+            SESSION(TABLE {source_table} PARTITION BY PULocationID, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
+        )
+        GROUP BY window_start, window_end, PULocationID;
+```
+
+3. Run the job
+
+```
+docker compose exec jobmanager ./bin/flink run \
+    -py /opt/src/job/session_window_green_job.py \
+    --pyFiles /opt/src -d
+```
+
+4. Query table to get the results
+
+```
+SELECT PULocationID, window_start, window_end, num_trips,
+       (window_end - window_start) AS session_duration
+FROM session_trips
+ORDER BY num_trips DESC
+LIMIT 5;
+ pulocationid |    window_start     |     window_end      | num_trips | session_duration
+--------------+---------------------+---------------------+-----------+------------------
+           74 | 2025-10-08 06:46:14 | 2025-10-08 08:27:40 |        81 | 01:41:26
+           74 | 2025-10-01 06:52:23 | 2025-10-01 08:23:33 |        72 | 01:31:10
+           74 | 2025-10-22 06:58:31 | 2025-10-22 08:25:04 |        71 | 01:26:33
+           74 | 2025-10-27 06:56:30 | 2025-10-27 08:24:09 |        70 | 01:27:39
+           74 | 2025-10-21 06:54:16 | 2025-10-21 08:26:24 |        69 | 01:32:08
+(5 rows)
+```
+
+> [!NOTE]
+> In Question 4 we put every event into fixed 5-minute buckets.
+> In Question 5 w group events into sessions, where a session continues as long as events for the same PULocationID keep arriving without a gap larger than 5 minutes.
+> Tumbling window = fixed intervals like 10:00–10:05, 10:05–10:10
+> Session window = dynamic intervals based on activity, like 10:02–10:11
+
 ## Question 6. Tumbling window - largest tip
 
 Create a Flink job that uses a 1-hour tumbling window to compute the
@@ -281,43 +527,67 @@ Which hour had the highest total tip amount?
 - 2025-10-22 08:00:00
 - 2025-10-30 16:00:00
 
-## Submitting the solutions
+**Answer: 2025-10-16 18:00:00**
 
-- Form for submitting: https://courses.datatalks.club/de-zoomcamp-2026/homework/hw7
+Steps:
 
-## Learning in public
-
-We encourage everyone to share what they learned.
-Read more about the benefits [here](https://alexeyondata.substack.com/p/benefits-of-learning-in-public-and).
-
-## Example post for LinkedIn
+1. Create the table
 
 ```
-Week 7 of Data Engineering Zoomcamp by @DataTalksClub complete!
-
-Just finished Module 7 - Streaming with PyFlink. Learned how to:
-
-- Set up Redpanda as a Kafka replacement
-- Build Kafka producers and consumers in Python
-- Create tumbling and session windows in Flink
-- Analyze real-time taxi trip data with stream processing
-
-Here's my homework solution: <LINK>
-
-You can sign up here: https://github.com/DataTalksClub/data-engineering-zoomcamp/
+CREATE TABLE IF NOT EXISTS tip_per_hour (
+    window_start TIMESTAMP,
+    total_tip DOUBLE PRECISION,
+    PRIMARY KEY (window_start)
+);
 ```
 
-## Example post for Twitter/X
+2. Create the job.
+
+- Change sink function and sink table name
+
+```python
+def create_tip_sink(t_env):
+    table_name = 'tip_per_hour'
+```
+
+- Change sink schema to
+
+```python
+ CREATE TABLE tip_per_hour (
+    window_start TIMESTAMP(3),
+    total_tip DOUBLE,
+    PRIMARY KEY (window_start) NOT ENFORCED
+)
+```
+
+- Change the aggregation query
+
+```python
+SELECT
+      window_start,
+      SUM(tip_amount) AS total_tip
+  FROM TABLE(
+      TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '1' HOUR)
+  )
+  GROUP BY window_start;
+```
+
+3. Submit job
 
 ```
-Module 7 of Data Engineering Zoomcamp done!
+docker compose exec jobmanager ./bin/flink run \
+ -py /opt/src/job/tumbling_window_largest_tip_job.py \
+ --pyFiles /opt/src -d
+```
 
-- Kafka producers and consumers
-- PyFlink tumbling and session windows
-- Real-time taxi data analysis
-- Redpanda as Kafka replacement
+4. Query table to get the results
 
-My solution: <LINK>
-
-Free course by @DataTalksClub: https://github.com/DataTalksClub/data-engineering-zoomcamp/
+```
+postgres=# select * from tip_per_hour order by total_tip DESC limit 3;
+    window_start     |     total_tip
+---------------------+-------------------
+ 2025-10-16 18:00:00 | 524.9599999999998
+ 2025-10-30 16:00:00 |             507.1
+ 2025-10-10 17:00:00 | 499.6000000000002
+(3 rows)
 ```
